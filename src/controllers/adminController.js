@@ -1,5 +1,60 @@
 import Blog from '../models/Blog.js';
+import User from '../models/User.js';
 import slugify from 'slugify';
+import jwt from 'jsonwebtoken';
+
+// @desc    Admin login
+// @route   POST /api/admin/login
+// @access  Public
+const login = async (req, res) => {
+  try {
+    const { email, password } = req.body;
+
+    const user = await User.findOne({ email });
+
+    if (user && (await user.matchPassword(password))) {
+      const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET || 'your_jwt_secret', {
+        expiresIn: '30d'
+      });
+      res.json({ token, email: user.email });
+    } else {
+      res.status(401).json({ message: 'Invalid email or password' });
+    }
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Register a new admin user (first time setup)
+// @route   POST /api/admin/register
+// @access  Public
+const registerUser = async (req, res) => {
+  try {
+    const { email, password } = req.body;
+
+    const userExists = await User.findOne({ email });
+
+    if (userExists) {
+      return res.status(400).json({ message: 'User already exists' });
+    }
+
+    const user = await User.create({
+      email,
+      password,
+    });
+
+    if (user) {
+      const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET || 'your_jwt_secret', {
+        expiresIn: '30d'
+      });
+      res.status(201).json({ token, email: user.email });
+    } else {
+      res.status(400).json({ message: 'Invalid user data' });
+    }
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
 
 // @desc    Create a blog
 // @route   POST /api/admin/blogs
@@ -120,10 +175,36 @@ const setFeaturedBlog = async (req, res) => {
   }
 };
 
+// @desc    Update admin password
+// @route   PUT /api/admin/password
+// @access  Private
+const updatePassword = async (req, res) => {
+  try {
+    const user = await User.findById(req.user._id);
+
+    if (user) {
+      if (await user.matchPassword(req.body.oldPassword)) {
+        user.password = req.body.newPassword;
+        await user.save();
+        res.json({ message: 'Password updated successfully' });
+      } else {
+        res.status(401).json({ message: 'Incorrect old password' });
+      }
+    } else {
+      res.status(404).json({ message: 'User not found' });
+    }
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
 export {
   createBlog,
   updateBlog,
   deleteBlog,
   uploadImage,
   setFeaturedBlog,
+  login,
+  registerUser,
+  updatePassword,
 };

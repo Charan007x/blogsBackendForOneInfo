@@ -7,11 +7,22 @@ import {
   deleteBlog,
   uploadImage,
   setFeaturedBlog,
+  login,
+  registerUser,
+  updatePassword,
 } from '../controllers/adminController.js';
+import { updatePricing } from '../controllers/pricingController.js';
+import { protect } from '../middleware/authMiddleware.js';
 
-router.post('/blogs', createBlog);
-router.route('/blogs/:id').put(updateBlog).delete(deleteBlog);
-router.put('/blogs/featured/:id', setFeaturedBlog);
-router.post('/upload', upload.single('image'), uploadImage);
+router.post('/login', login);
+router.post('/register', registerUser);
+
+router.put('/password', protect, updatePassword);
+router.put('/pricing', protect, updatePricing);
+
+router.post('/blogs', protect, createBlog);
+router.route('/blogs/:id').put(protect, updateBlog).delete(protect, deleteBlog);
+router.put('/blogs/featured/:id', protect, setFeaturedBlog);
+router.post('/upload', protect, upload.single('image'), uploadImage);
 
 export default router;

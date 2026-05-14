@@ -4,6 +4,7 @@ import cors from 'cors';
 import connectDB from './config/db.js';
 import blogRoutes from './routes/blogRoutes.js';
 import adminRoutes from './routes/adminRoutes.js';
+import pricingRoutes from './routes/pricingRoutes.js';
 
 // Connect to MongoDB
 connectDB();
@@ -18,6 +19,7 @@ app.use(express.urlencoded({ extended: true }));
 // Routes
 app.use('/api/blogs', blogRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/pricing', pricingRoutes);
 
 // Error Handling Middleware
 app.use((err, req, res, next) => {
